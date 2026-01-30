@@ -15,7 +15,7 @@ void printPath(std::vector<int> path) {
     cout << path.back() << endl;
 }
 
-int main() {
+int main1() {
     cout << "Hello World!" << endl;
     std::vector<std::vector<int>> testMatrix = {
         //       Node: 0    1    2    3    4
@@ -46,3 +46,14 @@ int main() {
     return 0;
 }
 
+#include "crow.h"
+
+int main() {
+    crow::SimpleApp app;
+
+    CROW_ROUTE(app, "/")([](){
+        return "Hello, Crow!";
+    });
+
+    app.port(18080).multithreaded().run();
+}
