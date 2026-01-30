@@ -1,0 +1,63 @@
+//
+// Created by taha on 1/30/26.
+//
+#ifndef PATH_FINDING_GRID_H
+#define PATH_FINDING_GRID_H
+#include <vector>
+
+#include "DijkstraPq.h"
+
+struct Coord {
+    int x;
+    int y;
+};
+
+int generateCellId(int column, int row, int width) {
+    // return y * width + x;
+    return row * width + column;
+}
+Coord getCoord(int id, int width) {
+    return {id % width, id / width};
+}
+//should be optimized (use array of booleans)
+bool isObstacle(int column, int row, std::vector<pii> obstacles) {
+    for (auto obstacle : obstacles) {
+        if (obstacle.first == row && obstacle.second == column) return true;
+    }
+    return false;
+}
+
+void addNeighbors(int column, int row, int columns, int rows,std::vector<pii> obstacles, std::vector<std::vector<Edge>>& adj) {
+    //generate cell id
+    int id = generateCellId(column, row, columns);
+    //generate cell's neighbors id
+    int n1 = generateCellId(column - 1, row, columns);
+    int n2 = generateCellId(column + 1, row, columns);
+    int n3 = generateCellId(column, row - 1, columns);
+    int n4 = generateCellId(column, row + 1, columns);
+    //if neighbors are not obstacles then push them to node's neighbors if their ids are valid
+    if ((column-1 >= 0) && !isObstacle(column-1, row, obstacles))
+        adj[id].push_back({n1, 1});
+    if ((column+1 < columns) && !isObstacle(column+1,row, obstacles))
+        adj[id].push_back({n2, 1});
+    if ((row - 1 >= 0) && !isObstacle(column, row-1, obstacles))
+        adj[id].push_back({n3, 1});
+    if ((row+1 < rows) && !isObstacle(column, row+1, obstacles))
+        adj[id].push_back({n4, 1});
+
+}
+std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> obstacles, int columns, int rows) {
+    //create adjacency list with given size (rows*columns-obstacles)
+    std::vector<std::vector<Edge>> adj(rows * columns);
+    //loop over cells
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < columns; c++) {
+            if (isObstacle(c,r,obstacles)) continue;
+            //generate cell's neighbors id
+            //if neighbors are not obstacles then push them to node's neighbors if their ids are valid
+            addNeighbors(c, r, columns, rows, obstacles, adj);
+        }
+    }
+    return adj;
+}
+#endif //PATH_FINDING_GRID_H
