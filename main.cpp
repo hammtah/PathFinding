@@ -44,15 +44,64 @@ int main1() {
     auto res = dijkstra_pq.dijkstraPQ(a.size(), a, startId);
    printPath(dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width)));
     return 0;
+
+    /*
+    {
+        "width": 10,
+        "height": 10,
+        "end":{"x": 3,"y":2},
+        "start":{"x":0,"y":0},
+        "obstacles":[{"x":1,"y":0}, {"x":1,"y":1}, {"x":1,"y":2}]
+    }
+     */
 }
 
 #include "crow.h"
 
 int main() {
     crow::SimpleApp app;
+    DijkstraPQ dijkstra_pq;
 
-    CROW_ROUTE(app, "/")([](){
-        return "Hello, Crow!";
+    CROW_ROUTE(app, "/").methods("POST"_method)([&dijkstra_pq](const crow::request& req){
+        auto data = crow::json::load(req.body);
+
+        //Validation
+        if (!data) return crow::response(400, "Invalid JSON");
+
+        //Extract input
+        int width = data["width"].i();
+        int height = data["height"].i();
+        pii start = {data["start"]["x"].i(), data["start"]["y"].i()};
+        pii end = {data["end"]["x"].i(), data["end"]["y"].i()};
+        std::vector<pii> obstacles;
+        for (auto& obs : data["obstacles"]) {
+            obstacles.push_back({obs["x"].i(), obs["y"].i()});
+        }
+
+        //Call the algorithm
+        auto list = gridToList(start, end, obstacles, width, height);
+        int startId = generateCellId(start.first, start.second, width);
+        int endId = generateCellId(end.first, end.second, width);
+        auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId);
+        auto idsPath = dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width));
+
+        //Prepare Coordinate Path for Frontend
+        std::vector<crow::json::wvalue> path;
+        for (auto id : idsPath) {
+            auto coord = getCoord(id, width);
+            crow::json::wvalue c;
+            c["x"] = coord.x;
+            c["y"] = coord.y;
+            path.push_back(std::move(c));
+        }
+        // Create the JSON object
+        crow::json::wvalue response;
+        response["path"] = std::move(path);
+        response["status"] = "success";
+        response["distance"] = res.dist[endId] == 1e9 ? -1 : res.dist[endId];
+        auto crow_res = crow::response(response);
+        crow_res.set_header("Access-Control-Allow-Origin", "*");
+        return crow_res;
     });
 
     app.port(18080).multithreaded().run();
