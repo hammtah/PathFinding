@@ -63,6 +63,8 @@ public:
     std::vector<int> recover(std::vector<int> prev, int endNode) {
         std::vector<int> path;
         for (int i = endNode; i != -1; i = prev[i]) {
+            // if (i>=prev.size()) return path;
+
             path.push_back(i);
         }
         std::reverse(path.begin(), path.end());

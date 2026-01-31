@@ -115,6 +115,9 @@ int main() {
         crow::json::wvalue response;
         response["path"] = std::move(path);
         response["status"] = "success";
+//         response["distance"] = -1;
+// if (endId < res.dist.size()) response["distance"] = res.dist[endId] == 1e9 ? -1 : res.dist[endId];
+
         response["distance"] = res.dist[endId] == 1e9 ? -1 : res.dist[endId];
         auto crow_res = crow::response(response);
         crow_res.set_header("Access-Control-Allow-Origin", "*");

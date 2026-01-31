@@ -14,6 +14,7 @@ struct Coord {
 
 int generateCellId(int column, int row, int width) {
     // return y * width + x;
+    //35*40+15
     return row * width + column;
 }
 Coord getCoord(int id, int width) {

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "tailwindcss";
+
+/* Set up Dark Mode by class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --color-primary: #13a4ec;
+    --color-background-light: #f6f7f8;
+    --color-background-dark: #101c22;
+
+    /* Custom Fonts */
+    --font-display: "Space Grotesk", "sans-serif";
+}
