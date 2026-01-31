@@ -22,7 +22,7 @@ Coord getCoord(int id, int width) {
 //should be optimized (use array of booleans)
 bool isObstacle(int column, int row, std::vector<pii> obstacles) {
     for (auto obstacle : obstacles) {
-        if (obstacle.first == row && obstacle.second == column) return true;
+        if (obstacle.first == column && obstacle.second == row) return true;
     }
     return false;
 }
@@ -36,14 +36,19 @@ void addNeighbors(int column, int row, int columns, int rows,std::vector<pii> ob
     int n3 = generateCellId(column, row - 1, columns);
     int n4 = generateCellId(column, row + 1, columns);
     //if neighbors are not obstacles then push them to node's neighbors if their ids are valid
-    if ((column-1 >= 0) && !isObstacle(column-1, row, obstacles))
+    if ((column-1 >= 0) && !isObstacle(column-1, row, obstacles)) {
         adj[id].push_back({n1, 1});
-    if ((column+1 < columns) && !isObstacle(column+1,row, obstacles))
+    }
+    if ((column+1 < columns) && !isObstacle(column+1,row, obstacles)) {
         adj[id].push_back({n2, 1});
-    if ((row - 1 >= 0) && !isObstacle(column, row-1, obstacles))
+    }
+    if ((row - 1 >= 0) && !isObstacle(column, row-1, obstacles)) {
         adj[id].push_back({n3, 1});
-    if ((row+1 < rows) && !isObstacle(column, row+1, obstacles))
+
+    }
+    if ((row+1 < rows) && !isObstacle(column, row+1, obstacles)) {
         adj[id].push_back({n4, 1});
+    }
 
 }
 std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> obstacles, int columns, int rows) {
@@ -52,10 +57,14 @@ std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> o
     //loop over cells
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < columns; c++) {
-            if (isObstacle(c,r,obstacles)) continue;
+            // if (isObstacle(c,r,obstacles)) continue;
+            if (!isObstacle(c,r,obstacles)) {
+                // std::cout << "obstacle at " << c << " " << r << std::endl;
+                addNeighbors(c, r, columns, rows, obstacles, adj);
+            }
             //generate cell's neighbors id
             //if neighbors are not obstacles then push them to node's neighbors if their ids are valid
-            addNeighbors(c, r, columns, rows, obstacles, adj);
+            // addNeighbors(c, r, columns, rows, obstacles, adj);
         }
     }
     return adj;

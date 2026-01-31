@@ -57,17 +57,34 @@ int main1() {
 }
 
 #include "crow.h"
+#include "crow/middlewares/cors.h"
 
+bool valid(crow::json::rvalue json) {
+    if (json["width"] && json["height"]  && json["start"] && json["end"] && json["obstacles"]) {
+        if (json["start"]["x"] && json["start"]["y"] && json["end"]["x"] && json["end"]["y"] && json["width"].i() > 0 && json["height"].i() > 0)
+            return true;
+    }
+    return false;
+}
 int main() {
-    crow::SimpleApp app;
     DijkstraPQ dijkstra_pq;
+    // Initialize the app with CORS middleware
+    crow::App<crow::CORSHandler> app;
+    // Configure CORS
+    auto& cors = app.get_middleware<crow::CORSHandler>();
 
-    CROW_ROUTE(app, "/").methods("POST"_method)([&dijkstra_pq](const crow::request& req){
+    cors
+      .global()                         // Apply to all routes
+      .origin("http://localhost:5173")  // Allow React app
+      .methods("POST"_method, "GET"_method, "OPTIONS"_method)
+      .headers("Content-Type", "Authorization");
+
+    CROW_ROUTE(app, "/api/path").methods("POST"_method)([&dijkstra_pq](const crow::request& req){
         auto data = crow::json::load(req.body);
 
         //Validation
         if (!data) return crow::response(400, "Invalid JSON");
-
+        if (!valid(data)) return crow::response(400, "Invalid JSON");
         //Extract input
         int width = data["width"].i();
         int height = data["height"].i();

@@ -14,7 +14,8 @@ button {
     padding: 0;
 }
 .start{
-    background-color: #52ff52;
+    background-color: #4CAF50;
+    transition: background-color 0.2s ease;
 }
 .end{
     background-color: #ff1a1a;
@@ -25,4 +26,9 @@ button {
 .path{
     transition: background-color 0.5s;
     background-color: #2defff;
+}
+.cell {
+    user-select: none; /* Prevents text selection */
+    -webkit-user-drag: none; /* Prevents ghost image dragging */
+    touch-action: none; /* Good for mobile pointers */
 }
