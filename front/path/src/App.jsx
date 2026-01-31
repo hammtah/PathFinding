@@ -77,9 +77,30 @@ const App = () => {
                     <div>
                         <h1 className="text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Grid Controls</h1>
                         <div className="flex flex-col gap-1">
-                            <ControlBtn active={editMode === 'start'} color="emerald" icon="location_on" label="Start Node" onClick={() => setEditMode('start')} />
-                            <ControlBtn active={editMode === 'end'} color="rose" icon="flag" label="End Node" onClick={() => setEditMode('end')} />
-                            <ControlBtn active={editMode === 'wall'} color="slate" icon="edit_square" label="Draw Walls" onClick={() => setEditMode('wall')} />
+                            <ControlBtn active={editMode === 'start'} color="emerald" icon="location_on"
+                                        label="Start Node" onClick={() => setEditMode('start')}/>
+                            <ControlBtn active={editMode === 'end'} color="rose" icon="flag" label="End Node"
+                                        onClick={() => setEditMode('end')}/>
+                            <ControlBtn active={editMode === 'wall'} color="slate" icon="edit_square" label="Draw Walls"
+                                        onClick={() => setEditMode('wall')}/>
+                            <div>
+                                <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
+                                <div
+                                    className="flex h-12 items-center justify-center rounded-xl bg-[#283339] p-1 gap-1">
+                                    <label
+                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 bg-[#111618] text-white text-xs font-bold shadow-sm">
+                                        <span>Dijkstra</span>
+                                    </label>
+                                    <label
+                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-[#9db0b9] text-xs font-medium hover:text-white transition-colors">
+                                        <span>A* Search</span>
+                                    </label>
+                                    <label
+                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-[#9db0b9] text-xs font-medium hover:text-white transition-colors">
+                                        <span>BFS</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -121,7 +142,7 @@ const App = () => {
                       ${isStart ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)] z-10 scale-95' : ''}
                       ${isEnd ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)] z-10 scale-95' : ''}
                       ${isObstacle ? 'bg-[#294559] scale-90 rounded-sm' : ''}
-                      ${isPath && !isStart && !isEnd ? 'bg-primary/60 scale-75' : ''}
+                      ${isPath && !isStart && !isEnd && !isObstacle ? 'bg-primary/60 scale-75' : ''}
                       ${!isStart && !isEnd && !isObstacle && !isPath ? 'hover:bg-white/5' : ''}
                     `}
                                     />
