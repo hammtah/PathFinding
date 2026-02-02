@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import './App.css';
 
 const ROWS = 20;
 const COLS = 40; // Matching your new 40-col design
@@ -8,13 +9,15 @@ const App = () => {
     const [end, setEnd] = useState({ x: COLS-1, y: ROWS-1 });
     const [obstacles, setObstacles] = useState([]);
     const [path, setPath] = useState([]);
+    const [visited, setVisited] = useState([]);
     const [distance, setDistance] = useState(0);
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState('wall'); // 'start', 'end', or 'wall'
-
+    // const [data, setData] = useState({});
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
+            //Set start/end node if its not an obstacle
             if (!obstacles.some(o => o.x === x && o.y === y)) setStart({ x, y });
         } else if (editMode === 'end') {
             if (!obstacles.some(o => o.x === x && o.y === y)) setEnd({ x, y });
@@ -29,9 +32,30 @@ const App = () => {
         }
     };
 
+    const animatePath = (data)=>{
+        for(let i = 0; i < data.path.length; i++) {
+            setTimeout(() => {
+                setPath(prevState => [...prevState, data.path[i]]);
+            }, i*50);
+        }
+    }
+    const animateVisited =(data)=>{
+        for(let i = 0; i < data.visited.length; i++) {
+            setTimeout(() => {
+                setVisited(prevState => [...prevState, data.visited[i]]);
+                if(i===data.visited.length-1){
+                    animatePath(data);
+                }
+            }, i*10);
+        }
+    }
     const findPath = async () => {
         console.log(JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles }))
         setLoading(true);
+        // setData({});
+        setPath([]);
+        setDistance(0);
+        setVisited([]);
         try {
             const response = await fetch('http://127.0.0.1:18080/api/path', {
                 method: 'POST',
@@ -39,8 +63,12 @@ const App = () => {
                 body: JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles })
             });
             const data = await response.json();
-            setPath(data.path || []);
+            // setData(data);
+            // setPath(data.path || []);
             setDistance(data.distance || 0);
+            // setVisited(data.visited || []);
+            animateVisited(data);
+
             console.log(data);
         } catch (e) {
             console.error("Pathfinding failed", e);
@@ -65,7 +93,7 @@ const App = () => {
                     <button onClick={findPath} disabled={loading} className="min-w-[100px] rounded-lg h-10 px-4 bg-primary text-sm font-bold hover:brightness-110 transition-all">
                         {loading ? '...' : 'Visualize'}
                     </button>
-                    <button onClick={() => {setObstacles([]); setPath([]);}} className="min-w-[100px] rounded-lg h-10 px-4 bg-[#283339] text-sm font-bold hover:bg-[#34424a]">
+                    <button onClick={() => {setObstacles([]); setPath([]); setVisited([])}} className="min-w-[100px] rounded-lg h-10 px-4 bg-[#283339] text-sm font-bold hover:bg-[#34424a]">
                         Clear Board
                     </button>
                 </div>
@@ -107,11 +135,11 @@ const App = () => {
                     <div className="mt-auto p-4 rounded-xl bg-[#111618] border border-[#283339]">
                         <h4 className="text-sm font-bold mb-2">Algorithm Stats</h4>
                         <div className="flex justify-between text-xs mb-1">
-                            <span className="text-[#9db0b9]">Distance:</span>
-                            <span className="text-primary font-mono">{distance.toFixed(1)}u</span>
+                            <span className="text-[#9db0b9]">Visited Nodes</span>
+                            <span className="text-primary font-mono">{visited.length}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                            <span className="text-[#9db0b9]">Path Nodes:</span>
+                            <span className="text-[#9db0b9]">Distance</span>
                             <span className="text-primary font-mono">{path.length}</span>
                         </div>
                     </div>
@@ -132,18 +160,19 @@ const App = () => {
                                 const isEnd = end.x === x && end.y === y;
                                 const isObstacle = obstacles.some(o => o.x === x && o.y === y);
                                 const isPath = path.some(p => p.x === x && p.y === y);
-
+                                const isVisited = visited.some(v => v.x === x && v.y === y);
                                 return (
                                     <div
                                         key={idx}
                                         onMouseDown={() => { setIsMouseDown(true); handleCellInteraction(x, y); }}
                                         onMouseEnter={() => { if (isMouseDown) handleCellInteraction(x, y); }}
-                                        className={`aspect-square border border-white/5 transition-all duration-200 
+                                        className={`aspect-square border border-white/5 transition-all duration-300 
                       ${isStart ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)] z-10 scale-95' : ''}
                       ${isEnd ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)] z-10 scale-95' : ''}
                       ${isObstacle ? 'bg-[#294559] scale-90 rounded-sm' : ''}
-                      ${isPath && !isStart && !isEnd && !isObstacle ? 'bg-primary/60 scale-75' : ''}
-                      ${!isStart && !isEnd && !isObstacle && !isPath ? 'hover:bg-white/5' : ''}
+                      ${isPath && !isStart && !isEnd && !isObstacle ? 'bg-primary/90 scale-75' : ''}
+                      ${isVisited && !isStart && !isEnd && !isObstacle &&!isPath ? 'animate-visited' : ''}
+                      ${!isStart && !isEnd && !isObstacle && !isPath && !isVisited ? 'hover:bg-white/5' : ''}
                     `}
                                     />
                                 );

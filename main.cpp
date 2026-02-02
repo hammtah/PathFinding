@@ -41,8 +41,9 @@ int main1() {
 
     auto a = gridToList(start, end, obstacles, width, height);
     int startId = generateCellId(start.first, start.second, width);
-    auto res = dijkstra_pq.dijkstraPQ(a.size(), a, startId);
-   printPath(dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width)));
+    int endId = generateCellId(end.first, end.second, width);
+    auto res = dijkstra_pq.dijkstraPQ(a.size(), a, startId, endId);
+   printPath(dijkstra_pq.recover(res.prev,endId));
     return 0;
 
     /*
@@ -99,9 +100,9 @@ int main() {
         auto list = gridToList(start, end, obstacles, width, height);
         int startId = generateCellId(start.first, start.second, width);
         int endId = generateCellId(end.first, end.second, width);
-        auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId);
+        auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId, endId);
         auto idsPath = dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width));
-
+        auto idsVisited = res.visited;
         //Prepare Coordinate Path for Frontend
         std::vector<crow::json::wvalue> path;
         for (auto id : idsPath) {
@@ -111,10 +112,20 @@ int main() {
             c["y"] = coord.y;
             path.push_back(std::move(c));
         }
+        //Prepare Coordinate visited for Frontend
+        std::vector<crow::json::wvalue> visited;
+        for (auto id : idsVisited) {
+            auto coord = getCoord(id, width);
+            crow::json::wvalue c;
+            c["x"] = coord.x;
+            c["y"] = coord.y;
+            visited.push_back(std::move(c));
+        }
         // Create the JSON object
         crow::json::wvalue response;
         response["path"] = std::move(path);
         response["status"] = "success";
+        response["visited"] = std::move(visited);
 //         response["distance"] = -1;
 // if (endId < res.dist.size()) response["distance"] = res.dist[endId] == 1e9 ? -1 : res.dist[endId];
 
@@ -125,4 +136,5 @@ int main() {
     });
 
     app.port(18080).multithreaded().run();
+
 }

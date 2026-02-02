@@ -20,14 +20,16 @@ struct Edge {
 struct DijkstraResult {
     std::vector<int> dist;
     std::vector<int> prev;
+    std::vector<int> visited;
 };
 
 class DijkstraPQ {
 public:
 
-    DijkstraResult dijkstraPQ(int n, const std::vector<std::vector<Edge>>& adj, int startNode) {
+    DijkstraResult dijkstraPQ(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
         std::vector<int> dist(n, INF);
         std::vector<int> prev(n, -1);
+        std::vector<int> visited;
 
         // Min-heap: stores pairs of (distance, node)
         // We want the smallest distance at the top
@@ -45,6 +47,9 @@ public:
             // skip this old entry if we have already a shortest path to node 'u'
             if (d > dist[node]) continue;
 
+            visited.push_back(node);
+            // Break if we just popped the destination
+            if (node == endNode) break;
             // Loop over neighbors
             for (auto& edge : adj[node]) {
                 int neighbor = edge.to;//Neighbor
@@ -57,7 +62,7 @@ public:
                 }
             }
         }
-        return {dist, prev};
+        return {dist, prev, visited};
     }
 
     std::vector<int> recover(std::vector<int> prev, int endNode) {
@@ -91,7 +96,7 @@ public:
 // public:
     std::vector<int> shortestPath(std::vector<std::vector<int>> matrix, int startNode, int endNode) {
         auto list = matrixToList(matrix);
-        return recover(dijkstraPQ(list.size(),list, startNode).prev, endNode);
+        return recover(dijkstraPQ(list.size(),list, startNode, endNode).prev, endNode);
     }
 };
 #endif //PATH_FINDING_DIJKSTRAPQ_H
