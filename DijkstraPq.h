@@ -17,16 +17,17 @@ struct Edge {
     int to;
     int weight;
 };
-struct DijkstraResult {
+struct PathResult {
     std::vector<int> dist;
     std::vector<int> prev;
-    std::vector<int> visited;
+    std::vector<int> visited;//ids visited
+    std::vector<int> path;//ids of path
 };
 
 class DijkstraPQ {
 public:
 
-    DijkstraResult dijkstraPQ(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
+    PathResult dijkstraPQ(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
         std::vector<int> dist(n, INF);
         std::vector<int> prev(n, -1);
         std::vector<int> visited;

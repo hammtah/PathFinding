@@ -7,13 +7,13 @@
 
 const int INF = 1e9; // Our representation of Infinity
 
-struct DijkstraResult {
+struct PathResult {
     std::vector<int> dist;
     std::vector<int> prev;
 };
 
 class Dijkstra {
-    DijkstraResult dijkstra(const std::vector<std::vector<int>>& matrix, int startNode) {
+    PathResult dijkstra(const std::vector<std::vector<int>>& matrix, int startNode) {
         int n = matrix.size();
 
         // 1. Initialize data structures

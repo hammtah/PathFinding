@@ -5,6 +5,7 @@
 #include <climits>
 
 #include "DijkstraPq.h"
+#include "PathFinder.h"
 using namespace std;
 #include "DijkstraPq.h"
 #include "Grid.h"
@@ -61,14 +62,15 @@ int main1() {
 #include "crow/middlewares/cors.h"
 
 bool valid(crow::json::rvalue json) {
-    if (json["width"] && json["height"]  && json["start"] && json["end"] && json["obstacles"]) {
-        if (json["start"]["x"] && json["start"]["y"] && json["end"]["x"] && json["end"]["y"] && json["width"].i() > 0 && json["height"].i() > 0)
+    if (json["width"] && json["height"]  && json["start"] && json["end"] && json["obstacles"] && json["algo"]) {
+        if (json["start"]["x"] && json["start"]["y"] && json["end"]["x"] && json["end"]["y"] && json["width"].i() > 0 && json["height"].i() > 0 )
             return true;
     }
     return false;
 }
 int main() {
-    DijkstraPQ dijkstra_pq;
+    // DijkstraPQ dijkstra_pq;
+    PathFinder pathFinder;
     // Initialize the app with CORS middleware
     crow::App<crow::CORSHandler> app;
     // Configure CORS
@@ -80,7 +82,7 @@ int main() {
       .methods("POST"_method, "GET"_method, "OPTIONS"_method)
       .headers("Content-Type", "Authorization");
 
-    CROW_ROUTE(app, "/api/path").methods("POST"_method)([&dijkstra_pq](const crow::request& req){
+    CROW_ROUTE(app, "/api/path").methods("POST"_method)([&pathFinder](const crow::request& req){
         auto data = crow::json::load(req.body);
 
         //Validation
@@ -91,6 +93,7 @@ int main() {
         int height = data["height"].i();
         pii start = {data["start"]["x"].i(), data["start"]["y"].i()};
         pii end = {data["end"]["x"].i(), data["end"]["y"].i()};
+        std::string algo = data["algo"].s();
         std::vector<pii> obstacles;
         for (auto& obs : data["obstacles"]) {
             obstacles.push_back({obs["x"].i(), obs["y"].i()});
@@ -100,12 +103,18 @@ int main() {
         auto list = gridToList(start, end, obstacles, width, height);
         int startId = generateCellId(start.first, start.second, width);
         int endId = generateCellId(end.first, end.second, width);
-        auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId, endId);
-        auto idsPath = dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width));
-        auto idsVisited = res.visited;
+        // auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId, endId);
+        // auto idsPath = dijkstra_pq.recover(res.prev,generateCellId(end.first, end.second, width));
+        PathResult res ;
+        if (algo == "dij") {
+            res = pathFinder.findPathDijkstra(list.size(), list, startId, endId);
+        }else if (algo == "bfs") {
+            res = pathFinder.findPathBFS(list.size(), list, startId, endId);
+        }
+        // auto idsVisited = res.visited;
         //Prepare Coordinate Path for Frontend
         std::vector<crow::json::wvalue> path;
-        for (auto id : idsPath) {
+        for (auto id : res.path) {
             auto coord = getCoord(id, width);
             crow::json::wvalue c;
             c["x"] = coord.x;
@@ -114,7 +123,7 @@ int main() {
         }
         //Prepare Coordinate visited for Frontend
         std::vector<crow::json::wvalue> visited;
-        for (auto id : idsVisited) {
+        for (auto id : res.visited) {
             auto coord = getCoord(id, width);
             crow::json::wvalue c;
             c["x"] = coord.x;

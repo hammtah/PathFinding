@@ -14,6 +14,7 @@ const App = () => {
     const [isMouseDown, setIsMouseDown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState('wall'); // 'start', 'end', or 'wall'
+    const [algo, setAlgo] = useState("dij");
     // const [data, setData] = useState({});
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
@@ -49,8 +50,9 @@ const App = () => {
             }, i*10);
         }
     }
+
     const findPath = async () => {
-        console.log(JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles }))
+        console.log(JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles, "algo": algo }))
         setLoading(true);
         // setData({});
         setPath([]);
@@ -60,7 +62,7 @@ const App = () => {
             const response = await fetch('http://127.0.0.1:18080/api/path', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles })
+                body: JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles, "algo": algo })
             });
             const data = await response.json();
             // setData(data);
@@ -115,17 +117,17 @@ const App = () => {
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
                                 <div
                                     className="flex h-12 items-center justify-center rounded-xl bg-[#283339] p-1 gap-1">
-                                    <label
-                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 bg-[#111618] text-white text-xs font-bold shadow-sm">
+                                    <label onClick={()=>setAlgo("dij")}
+                                        className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] font-medium text-xs hover:text-white ${algo == 'dij'? 'bg-[#111618] font-bold text-white shadow-sm':''}`}>
                                         <span>Dijkstra</span>
                                     </label>
-                                    <label
-                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-[#9db0b9] text-xs font-medium hover:text-white transition-colors">
-                                        <span>A* Search</span>
-                                    </label>
-                                    <label
-                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-[#9db0b9] text-xs font-medium hover:text-white transition-colors">
+                                    <label onClick={()=>setAlgo("bfs")}
+                                        className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white  ${algo == 'bfs'? 'bg-[#111618] font-bold text-white shadow-sm':''}` }>
                                         <span>BFS</span>
+                                    </label>
+                                    <label onClick={()=>setAlgo("a")}
+                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white ">
+                                        <span>A* Search</span>
                                     </label>
                                 </div>
                             </div>

@@ -8,6 +8,8 @@ find_package(Crow REQUIRED)
 add_executable(Path_Finding main.cpp
         Dijkstra.h
         DijkstraPq.h
-        Grid.h)
+        Grid.h
+        BFS.h
+        PathFinder.h)
 
 target_link_libraries(Path_Finding Crow::Crow)
