@@ -7,3 +7,7 @@ add battle mode : the two algos start at the same time in different colors;If th
 BFS:(//add strategy pattern)
 used for unweighted graphs, traverse all nodes level by level starting with the root then its adjacent nodes
 the first time we achieve the end node then this is the shortest path
+
+## IMPORTANT : 
+Shortest path nodes: this is the path length; the path include the start and end cells.( the same for visited nodes; the start is included) => so we've made in front length()-1
+Path weight: weight from start to end (start is excluded) 

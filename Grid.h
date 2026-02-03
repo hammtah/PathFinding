@@ -28,7 +28,14 @@ bool isObstacle(int column, int row, std::vector<pii> obstacles) {
     return false;
 }
 
-void addNeighbors(int column, int row, int columns, int rows,std::vector<pii> obstacles, std::vector<std::vector<Edge>>& adj) {
+bool isSwamp(int column, int row, std::vector<pii> swamps) {
+    for (auto swamp : swamps) {
+        if (swamp.first == column && swamp.second == row) return true;
+    }
+    return false;
+}
+
+void addNeighbors(int column, int row, int columns, int rows,std::vector<pii> obstacles, std::vector<std::vector<Edge>>& adj, std::vector<pii> swamps) {
     //generate cell id
     int id = generateCellId(column, row, columns);
     //generate cell's neighbors id
@@ -38,21 +45,37 @@ void addNeighbors(int column, int row, int columns, int rows,std::vector<pii> ob
     int n4 = generateCellId(column, row + 1, columns);
     //if neighbors are not obstacles then push them to node's neighbors if their ids are valid
     if ((column-1 >= 0) && !isObstacle(column-1, row, obstacles)) {
-        adj[id].push_back({n1, 1});
+        if (isSwamp(column-1,row, swamps)) {
+            adj[id].push_back({n1, 10});
+        }else {
+            adj[id].push_back({n1, 1});
+        }
     }
     if ((column+1 < columns) && !isObstacle(column+1,row, obstacles)) {
-        adj[id].push_back({n2, 1});
+        if (isSwamp(column+1,row, swamps)) {
+            adj[id].push_back({n2, 10});
+        }else {
+            adj[id].push_back({n2, 1});
+        }
     }
     if ((row - 1 >= 0) && !isObstacle(column, row-1, obstacles)) {
-        adj[id].push_back({n3, 1});
+        if (isSwamp(column,row-1, swamps)) {
+            adj[id].push_back({n3, 10});
+        }else {
+            adj[id].push_back({n3, 1});
+        }
 
     }
     if ((row+1 < rows) && !isObstacle(column, row+1, obstacles)) {
-        adj[id].push_back({n4, 1});
+        if (isSwamp(column,row+1, swamps)) {
+            adj[id].push_back({n4, 10});
+        }else {
+            adj[id].push_back({n4, 1});
+        }
     }
 
 }
-std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> obstacles, int columns, int rows) {
+std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> obstacles, int columns, int rows, std::vector<pii> swamps) {
     //create adjacency list with given size (rows*columns-obstacles)
     std::vector<std::vector<Edge>> adj(rows * columns);
     //loop over cells
@@ -61,7 +84,7 @@ std::vector<std::vector<Edge>> gridToList(pii start, pii end, std::vector<pii> o
             // if (isObstacle(c,r,obstacles)) continue;
             if (!isObstacle(c,r,obstacles)) {
                 // std::cout << "obstacle at " << c << " " << r << std::endl;
-                addNeighbors(c, r, columns, rows, obstacles, adj);
+                addNeighbors(c, r, columns, rows, obstacles, adj, swamps);
             }
             //generate cell's neighbors id
             //if neighbors are not obstacles then push them to node's neighbors if their ids are valid

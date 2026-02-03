@@ -40,11 +40,11 @@ int main1() {
         vector<pii> obstacles= {{1,0}, {1,1}, {1,2}};
 
 
-    auto a = gridToList(start, end, obstacles, width, height);
-    int startId = generateCellId(start.first, start.second, width);
-    int endId = generateCellId(end.first, end.second, width);
-    auto res = dijkstra_pq.dijkstraPQ(a.size(), a, startId, endId);
-   printPath(dijkstra_pq.recover(res.prev,endId));
+   //  auto a = gridToList(start, end, obstacles, width, height);
+   //  int startId = generateCellId(start.first, start.second, width);
+   //  int endId = generateCellId(end.first, end.second, width);
+   //  auto res = dijkstra_pq.dijkstraPQ(a.size(), a, startId, endId);
+   // printPath(dijkstra_pq.recover(res.prev,endId));
     return 0;
 
     /*
@@ -68,6 +68,16 @@ bool valid(crow::json::rvalue json) {
     }
     return false;
 }
+int recalcUnweightedDistance(vector<int> path, vector<pii> swamps, int swampWeight, int width) {
+    int numOfSwampsInPath = 0;
+    for (auto swamp : swamps) {
+        if (find(path.begin(), path.end(), generateCellId(swamp.first, swamp.second, width)) != path.end()) {
+            numOfSwampsInPath++;
+        };
+    }
+    return ((path.size() - numOfSwampsInPath) + numOfSwampsInPath*swampWeight);
+}
+
 int main() {
     // DijkstraPQ dijkstra_pq;
     PathFinder pathFinder;
@@ -98,9 +108,12 @@ int main() {
         for (auto& obs : data["obstacles"]) {
             obstacles.push_back({obs["x"].i(), obs["y"].i()});
         }
-
+        std::vector<pii> swamps;
+        for (auto& obs : data["swamps"]) {
+            swamps.push_back({obs["x"].i(), obs["y"].i()});
+        }
         //Call the algorithm
-        auto list = gridToList(start, end, obstacles, width, height);
+        auto list = gridToList(start, end, obstacles, width, height, swamps);
         int startId = generateCellId(start.first, start.second, width);
         int endId = generateCellId(end.first, end.second, width);
         // auto res = dijkstra_pq.dijkstraPQ(list.size(), list, startId, endId);
@@ -110,6 +123,10 @@ int main() {
             res = pathFinder.findPathDijkstra(list.size(), list, startId, endId);
         }else if (algo == "bfs") {
             res = pathFinder.findPathBFS(list.size(), list, startId, endId);
+            //Recalculate distance so that it calculate weighted nodes as well:
+            //If the path contains a swamp then change the weight of this cell to the swamp's weight instead of 1
+            //This is helpful for comparison between algos
+            if (res.dist[endId] != 1e9 ) res.dist[endId] = recalcUnweightedDistance(res.path, swamps, 5, width);
         }
         // auto idsVisited = res.visited;
         //Prepare Coordinate Path for Frontend

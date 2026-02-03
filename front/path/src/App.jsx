@@ -1,12 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import './App.css';
+import { Waves } from 'lucide-react';
 
 const ROWS = 20;
 const COLS = 40; // Matching your new 40-col design
 
 const App = () => {
-    const [start, setStart] = useState({ x: 0, y: 0 });
-    const [end, setEnd] = useState({ x: COLS-1, y: ROWS-1 });
+    const startPlaceX = Math.floor(Math.random()*COLS);
+    const startPlaceY = Math.floor(Math.random()*ROWS);
+    const endPlaceX = Math.floor(Math.random()*COLS);
+    const endPlaceY = Math.floor(Math.random()*ROWS);
+    const [start, setStart] = useState({ x: startPlaceX, y: startPlaceY });
+    const [end, setEnd] = useState({ x: endPlaceX, y: endPlaceY });
     const [obstacles, setObstacles] = useState([]);
     const [path, setPath] = useState([]);
     const [visited, setVisited] = useState([]);
@@ -15,6 +20,9 @@ const App = () => {
     const [loading, setLoading] = useState(false);
     const [editMode, setEditMode] = useState('wall'); // 'start', 'end', or 'wall'
     const [algo, setAlgo] = useState("dij");
+    const [swamps, setSwaps] = useState([]);
+    const [pathWeight, setPathWeight] = useState(0);//The total weight of the path
+    const [visitedWeight, setVisitedWeight] = useState(0);//Total weight of the visited nodes
     // const [data, setData] = useState({});
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
@@ -22,22 +30,44 @@ const App = () => {
             if (!obstacles.some(o => o.x === x && o.y === y)) setStart({ x, y });
         } else if (editMode === 'end') {
             if (!obstacles.some(o => o.x === x && o.y === y)) setEnd({ x, y });
-        } else {
+        }else if(editMode === 'swamp'){
+            // Toggle swamps
+            if ((x === start.x && y === start.y) || (x === end.x && y === end.y)) return;
+            setSwaps((prev) => {
+                const exists = prev.some(o => o.x === x && o.y === y);
+                if (exists) return prev.filter(o => !(o.x === x && o.y === y));
+                //Remove from obstacles
+                const existsInObstacles = obstacles.some(o => o.x === x && o.y === y);
+                if(existsInObstacles) setObstacles(obstacles.filter(o => !(o.x === x && o.y === y)));
+                return [...prev, { x, y }];
+            });
+        }
+        else {
             // Toggle Walls
             if ((x === start.x && y === start.y) || (x === end.x && y === end.y)) return;
             setObstacles((prev) => {
                 const exists = prev.some(o => o.x === x && o.y === y);
                 if (exists) return prev.filter(o => !(o.x === x && o.y === y));
+                //Remove from swamps
+                //...
                 return [...prev, { x, y }];
             });
         }
     };
 
     const animatePath = (data)=>{
+        //Delay cell showing if its a swamp
+        //if the current cell is a swamp then add it and delay the showing of the nextCell
+        let delay = 0;
+        let isSwamp = false;
         for(let i = 0; i < data.path.length; i++) {
+            if(isSwamp === true){
+                delay += 300;
+            }
+            isSwamp = swamps.some(s => s.x === data.path[i].x && s.y === data.path[i].y);
             setTimeout(() => {
                 setPath(prevState => [...prevState, data.path[i]]);
-            }, i*50);
+            }, i*50 + delay);
         }
     }
     const animateVisited =(data)=>{
@@ -52,22 +82,27 @@ const App = () => {
     }
 
     const findPath = async () => {
-        console.log(JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles, "algo": algo }))
+        const req = { "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles, "algo": algo, "swamps": swamps };
+        console.log(req)
         setLoading(true);
+        //Clear previous result
         // setData({});
         setPath([]);
         setDistance(0);
         setVisited([]);
+        setVisitedWeight(0);
+        setPathWeight(0);
         try {
             const response = await fetch('http://127.0.0.1:18080/api/path', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "width": COLS, "height": ROWS, "start": start, "end":end, "obstacles":obstacles, "algo": algo })
+                body: JSON.stringify(req)
             });
             const data = await response.json();
             // setData(data);
             // setPath(data.path || []);
-            setDistance(data.distance || 0);
+            setPathWeight(data.distance || 0);
+            // setVisitedWeight(data.visitedWeight || 0);
             // setVisited(data.visited || []);
             animateVisited(data);
 
@@ -95,7 +130,7 @@ const App = () => {
                     <button onClick={findPath} disabled={loading} className="min-w-[100px] rounded-lg h-10 px-4 bg-primary text-sm font-bold hover:brightness-110 transition-all">
                         {loading ? '...' : 'Visualize'}
                     </button>
-                    <button onClick={() => {setObstacles([]); setPath([]); setVisited([])}} className="min-w-[100px] rounded-lg h-10 px-4 bg-[#283339] text-sm font-bold hover:bg-[#34424a]">
+                    <button onClick={() => {setObstacles([]); setPath([]); setVisited([]); setSwaps([]); setPathWeight(0)}} className="min-w-[100px] rounded-lg h-10 px-4 bg-[#283339] text-sm font-bold hover:bg-[#34424a]">
                         Clear Board
                     </button>
                 </div>
@@ -103,7 +138,7 @@ const App = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar */}
-                <aside className="w-72 border-r border-[#283339] flex flex-col p-6 gap-8">
+                <aside className="w-72 border-r border-[#283339] flex flex-col p-6 gap-8 ">
                     <div>
                         <h1 className="text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Grid Controls</h1>
                         <div className="flex flex-col gap-1">
@@ -113,6 +148,8 @@ const App = () => {
                                         onClick={() => setEditMode('end')}/>
                             <ControlBtn active={editMode === 'wall'} color="slate" icon="edit_square" label="Draw Walls"
                                         onClick={() => setEditMode('wall')}/>
+                            <ControlBtn active={editMode === 'swamp'} color="slate" icon="waves" label="Draw Swamps"
+                                        onClick={() => setEditMode('swamp')}/>
                             <div>
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
                                 <div
@@ -138,11 +175,19 @@ const App = () => {
                         <h4 className="text-sm font-bold mb-2">Algorithm Stats</h4>
                         <div className="flex justify-between text-xs mb-1">
                             <span className="text-[#9db0b9]">Visited Nodes</span>
-                            <span className="text-primary font-mono">{visited.length}</span>
+                            <span className="text-primary font-mono">{(visited.length === 0) ? 0 : (visited.length - 1)}</span>
                         </div>
-                        <div className="flex justify-between text-xs">
-                            <span className="text-[#9db0b9]">Distance</span>
-                            <span className="text-primary font-mono">{path.length}</span>
+                        <div className="flex justify-between text-xs mb-1">
+                            <span className="text-[#9db0b9]">Shortest Path Nodes</span>
+                            <span className="text-primary font-mono">{(path.length === 0) ? 0 : (path.length- 1)}</span>
+                        </div>
+                        {/*<div className="flex justify-between text-xs">*/}
+                        {/*    <span className="text-[#9db0b9]">Visited Nodes Weight</span>*/}
+                        {/*    <span className="text-primary font-mono">{visitedWeight}</span>*/}
+                        {/*</div>*/}
+                        <div className="flex justify-between text-xs ">
+                            <span className="text-[#9db0b9]">Path Weight</span>
+                            <span className="text-primary font-mono">{pathWeight}</span>
                         </div>
                     </div>
                 </aside>
@@ -161,6 +206,7 @@ const App = () => {
                                 const isStart = start.x === x && start.y === y;
                                 const isEnd = end.x === x && end.y === y;
                                 const isObstacle = obstacles.some(o => o.x === x && o.y === y);
+                                const isSwamp = swamps.some(s => s.x === x && s.y === y);
                                 const isPath = path.some(p => p.x === x && p.y === y);
                                 const isVisited = visited.some(v => v.x === x && v.y === y);
                                 return (
@@ -172,11 +218,22 @@ const App = () => {
                       ${isStart ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)] z-10 scale-95' : ''}
                       ${isEnd ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)] z-10 scale-95' : ''}
                       ${isObstacle ? 'bg-[#294559] scale-90 rounded-sm' : ''}
+                      ${isSwamp && !isPath ? ' scale-90 rounded-sm swamp' : ''}
+                      ${isSwamp && isPath ? 'swamp-path scale-90 rounded-sm ' : ''}
                       ${isPath && !isStart && !isEnd && !isObstacle ? 'bg-primary/90 scale-75' : ''}
-                      ${isVisited && !isStart && !isEnd && !isObstacle &&!isPath ? 'animate-visited' : ''}
-                      ${!isStart && !isEnd && !isObstacle && !isPath && !isVisited ? 'hover:bg-white/5' : ''}
+                      ${isVisited && !isStart && !isEnd && !isObstacle && !isPath ? 'animate-visited' : ''}
+                      ${!isStart && !isEnd && !isObstacle && !isPath && !isVisited && !isSwamp? 'hover:bg-white/5' : ''}
                     `}
-                                    />
+                                    >
+                                        {isSwamp && (
+                                            <Waves
+                                                size={14}
+                                                strokeWidth={1.5}
+                                                color="rgba(255, 255, 255, 0.3)"
+                                                className={"flowing-wave"}
+                                            />
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
