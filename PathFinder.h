@@ -6,10 +6,13 @@
 #define PATH_FINDING_PATHFINDER_H
 #include "DijkstraPq.h"
 #include "BFS.h"
+#include "Astar.h"
+
 class PathFinder {
     private:
     DijkstraPQ dijkstra;
     BFS bfs;
+    Astar astar;
 public:
     PathResult findPathDijkstra(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
         auto res = dijkstra.dijkstraPQ(n, adj, startNode, endNode);
@@ -18,6 +21,11 @@ public:
     }
     PathResult findPathBFS(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
         auto res = bfs.runBFS(n, adj, startNode, endNode);
+        res.path = std::move(bfs.recover(res.prev, endNode));
+        return res;
+    }
+    PathResult findPathAstar(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode, int width) {
+        auto res = astar.aStarPQ(n, adj, startNode, endNode, width);
         res.path = std::move(bfs.recover(res.prev, endNode));
         return res;
     }

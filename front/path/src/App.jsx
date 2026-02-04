@@ -154,16 +154,16 @@ const App = () => {
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
                                 <div
                                     className="flex h-12 items-center justify-center rounded-xl bg-[#283339] p-1 gap-1">
+                                    <label onClick={()=>setAlgo("bfs")}
+                                           className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white  ${algo == 'bfs'? 'bg-[#111618] font-bold text-white shadow-sm':''}` }>
+                                        <span>BFS</span>
+                                    </label>
                                     <label onClick={()=>setAlgo("dij")}
                                         className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] font-medium text-xs hover:text-white ${algo == 'dij'? 'bg-[#111618] font-bold text-white shadow-sm':''}`}>
                                         <span>Dijkstra</span>
                                     </label>
-                                    <label onClick={()=>setAlgo("bfs")}
-                                        className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white  ${algo == 'bfs'? 'bg-[#111618] font-bold text-white shadow-sm':''}` }>
-                                        <span>BFS</span>
-                                    </label>
-                                    <label onClick={()=>setAlgo("a")}
-                                        className="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white ">
+                                    <label onClick={()=>setAlgo("astar")}
+                                        className={`flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 transition-all duration-300  text-[#9db0b9] text-xs font-medium hover:text-white  ${algo == 'astar'? 'bg-[#111618] font-bold text-white shadow-sm':''}` }>
                                         <span>A* Search</span>
                                     </label>
                                 </div>

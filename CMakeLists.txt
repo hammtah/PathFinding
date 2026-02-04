@@ -10,6 +10,10 @@ add_executable(Path_Finding main.cpp
         DijkstraPq.h
         Grid.h
         BFS.h
-        PathFinder.h)
+        PathFinder.h
+        Util.h
+        Server.h
+        Astar.h
+)
 
 target_link_libraries(Path_Finding Crow::Crow)
