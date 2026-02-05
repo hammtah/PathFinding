@@ -4,10 +4,11 @@
 
 #ifndef PATH_FINDING_PATHFINDER_H
 #define PATH_FINDING_PATHFINDER_H
+#include "Util.h"
 #include "DijkstraPq.h"
 #include "BFS.h"
 #include "Astar.h"
-
+#include <chrono>
 /**
  * @brief Facade for running different path-finding algorithms.
  *
@@ -33,8 +34,14 @@ public:
      * @complexity O((V + E) log V) with a binary heap, V = n.
      */
     PathResult findPathDijkstra(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
-        auto res = dijkstra.dijkstraPQ(n, adj, startNode, endNode);
+        PathResult res;
+        float duration = 0;
+        {
+            Util::Timer t(&duration);
+            res = std::move(dijkstra.dijkstraPQ(n, adj, startNode, endNode));
+        }
         res.path = std::move(dijkstra.recover(res.prev, endNode));
+        res.executionTime = duration;
         return res;
     }
 
@@ -50,8 +57,14 @@ public:
      * @complexity O(V + E).
      */
     PathResult findPathBFS(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode) {
-        auto res = bfs.runBFS(n, adj, startNode, endNode);
+        PathResult res;
+        float duration = 0;
+        {
+            Util::Timer t(&duration);
+            res = std::move(bfs.runBFS(n, adj, startNode, endNode));
+        }
         res.path = std::move(bfs.recover(res.prev, endNode));
+        res.executionTime = duration;
         return res;
     }
 
@@ -68,8 +81,14 @@ public:
      * @complexity Depends on heuristic quality; worst-case similar to Dijkstra: O((V + E) log V).
      */
     PathResult findPathAstar(int n, const std::vector<std::vector<Edge>>& adj, int startNode, int endNode, int width) {
-        auto res = astar.aStarPQ(n, adj, startNode, endNode, width);
+        PathResult res;
+        float duration = 0;
+        {
+            Util::Timer t(&duration);
+            res = std::move(astar.aStarPQ(n, adj, startNode, endNode, width));
+        }
         res.path = std::move(bfs.recover(res.prev, endNode));
+        res.executionTime = duration;
         return res;
     }
 

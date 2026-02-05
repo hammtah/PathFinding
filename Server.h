@@ -190,7 +190,7 @@ public:
             response["status"] = "success";
             response["visited"] = std::move(visited);
             response["distance"] = res.dist[algoFeed.endId] == 1e9 ? -1 : res.dist[algoFeed.endId];
-
+            response["execution_time"] = res.executionTime;
             auto crow_res = crow::response(response);
             crow_res.set_header("Access-Control-Allow-Origin", "*");
             return crow_res;

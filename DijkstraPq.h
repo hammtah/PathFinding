@@ -40,6 +40,7 @@ struct PathResult {
     std::vector<int> prev;    ///< prev[v] = predecessor of v on a shortest path (-1 if none).
     std::vector<int> visited; ///< Node ids in the order they are popped from the priority queue.
     std::vector<int> path;    ///< Optional path container; not populated by dijkstraPQ(), can be filled via recover().
+    float executionTime;      ///< Execution time of the path finding operation in ms
 };
 
 /**

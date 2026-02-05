@@ -9,7 +9,7 @@
 #include <ranges>
 #include <iostream>
 #include <chrono>
-
+#include "Grid.h"
 
 /**
  * @brief Utility helpers for request validation, distance post-processing, and JSON conversion.
@@ -89,14 +89,15 @@ public:
     }
 
     /**
-     * @brief Provides functionality for measuring time intervals.
-     *
-     * This class is designed to compute elapsed time between the start and stop points.
-     * It can be used to benchmark performance or track time durations for operations.
-     */
-    struct Timer {
+ * @brief Provides functionality for measuring time intervals.
+ *
+ * This class is designed to compute elapsed time between the start and stop points.
+ * It can be used to benchmark performance or track time durations for operations.
+ */
+    class Timer {
         std::chrono::time_point<std::chrono::high_resolution_clock> start;
         float *_out;
+    public:
         Timer(float* duration) {
             start = std::chrono::high_resolution_clock::now();
             _out = duration;
@@ -105,10 +106,15 @@ public:
         ~Timer() {
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<float> duration = end - start;
-            if (_out)
+            if (_out) {
                 *_out = duration.count() * 1000.0f ;
+                std::cout << "It tooks "<< *_out << " ms" << std::endl;
+            }
         }
     };
 
 };
+
+
+
 #endif //PATH_FINDING_UTIL_H
