@@ -7,26 +7,65 @@
 #include "crow.h"
 #include "crow/middlewares/cors.h"
 
+/**
+ * @brief Incoming path-finding request payload decoded from JSON.
+ *
+ * Represents grid dimensions, start/end coordinates, algorithm selection,
+ * and environment features such as obstacles and swamps.
+ */
 struct PathRequest {
-    int width;
-    int height;
-    pii start;
-    pii end;
-    std::string algo;
-    std::vector<pii> obstacles;
-    std::vector<pii> swamps;
+    int width;                 ///< Grid width (number of columns).
+    int height;                ///< Grid height (number of rows).
+    pii start;                 ///< Start cell as (x, y).
+    pii end;                   ///< End cell as (x, y).
+    std::string algo;          ///< Algorithm key (e.g., "dij", "astar", "bfs").
+    std::vector<pii> obstacles;///< List of obstacle cells as (x, y).
+    std::vector<pii> swamps;   ///< List of swamp cells as (x, y) with higher traversal cost.
 };
+
+/**
+ * @brief Preprocessed inputs for path-finding algorithms.
+ *
+ * Contains an adjacency list and linearized ids of the start and end cells.
+ */
 struct AlgosFeed {
-    std::vector<std::vector<Edge>> list;
-    int startId;
-    int endId;
+    std::vector<std::vector<Edge>> list; ///< Adjacency list for the grid.
+    int startId;                         ///< Linear id of the start cell.
+    int endId;                           ///< Linear id of the end cell.
 };
+
+/**
+ * @brief Build the adjacency list and compute linear ids for start and end cells.
+ *
+ * @param requestData Parsed request data containing grid dimensions, start/end, obstacles, and swamps.
+ * @return AlgosFeed with adjacency list and start/end node ids.
+ * @note The adjacency list encodes 4-directional movement, obstacles as impassable, and swamps as higher-cost cells.
+ */
 AlgosFeed generateAlgosFeed(PathRequest requestData) {
     auto list = gridToList(requestData.start, requestData.end, requestData.obstacles, requestData.width, requestData.height, requestData.swamps);
     int startId = generateCellId(requestData.start.first, requestData.start.second, requestData.width);
     int endId = generateCellId(requestData.end.first, requestData.end.second, requestData.width);
     return {list, startId, endId};
 }
+
+/**
+ * @brief Extract and validate request fields from a JSON payload.
+ *
+ * Expected schema:
+ * {
+ *   "width": int,
+ *   "height": int,
+ *   "start": {"x": int, "y": int},
+ *   "end":   {"x": int, "y": int},
+ *   "algo":  string,
+ *   "obstacles": [{"x": int, "y": int}, ...],
+ *   "swamps":    [{"x": int, "y": int}, ...]
+ * }
+ *
+ * @param data Parsed crow JSON rvalue.
+ * @return PathRequest with all fields populated.
+ * @throws (indirectly) if required fields are missing or have invalid types.
+ */
 PathRequest getRequestData(crow::json::rvalue data) {
     //Extract input
     int width = data["width"].i();
@@ -45,10 +84,21 @@ PathRequest getRequestData(crow::json::rvalue data) {
     return {width, height, start, end, algo, obstacles, swamps};
 }
 
+/**
+ * @brief HTTP server exposing path-finding APIs.
+ *
+ * Configures CORS, defines REST endpoints, and runs the event loop.
+ */
 class Server {
-    crow::App<crow::CORSHandler> app;
-    PathFinder pathFinder;
+    crow::App<crow::CORSHandler> app; ///< Crow application with CORS middleware.
+    PathFinder pathFinder;            ///< Algorithm dispatcher/runner.
 
+    /**
+     * @brief Configure global CORS policy for the app.
+     *
+     * Sets allowed origin, methods, and headers.
+     * @sideeffects Mutates the middleware configuration on the internal app instance.
+     */
     void bootstrap() {
         // Configure CORS
         auto& cors = app.get_middleware<crow::CORSHandler>();
@@ -78,9 +128,27 @@ class Server {
      */
 
 public:
+    /**
+     * @brief Construct the server and initialize configuration.
+     *
+     * Calls bootstrap() to configure CORS and other middleware.
+     */
     Server(){
         bootstrap();
     }
+
+    /**
+     * @brief Define routes and start the HTTP server.
+     *
+     * Exposes POST /api/path which:
+     *  - Validates the request body,
+     *  - Parses request data,
+     *  - Generates algorithm inputs,
+     *  - Runs the selected algorithm ("dij", "astar", or "bfs"),
+     *  - Returns a JSON response containing path, visited nodes, and distance.
+     *
+     * The server listens on port 18080 and runs multi-threaded.
+     */
     void serve(){
         CROW_ROUTE(app, "/api/path").methods("POST"_method)([this](const crow::request& req){
             auto data = crow::json::load(req.body);
