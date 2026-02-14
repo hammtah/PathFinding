@@ -12,3 +12,6 @@ the first time we achieve the end node then this is the shortest path
 ## IMPORTANT : 
 Shortest path nodes: this is the path length; the path include the start and end cells.( the same for visited nodes; the start is included) => so we've made in front length()-1
 Path weight: weight from start to end (start is excluded) 
+
+## conan install dependencies
+conan install . --output-folder=build --build=missing

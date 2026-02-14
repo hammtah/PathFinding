@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION  3.31.6)
+cmake_minimum_required(VERSION  3.29.3)
 project(Path_Finding)
 
 set(CMAKE_CXX_STANDARD 20)
