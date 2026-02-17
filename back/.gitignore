@@ -1,0 +1,5 @@
+/build/
+/cmake-build-debug/
+/CMakeUserPresets.json
+/.idea/
+node_modules/
