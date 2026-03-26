@@ -1,6 +1,74 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import './App.css';
 import { Waves } from 'lucide-react';
+// import { generateMaze as apiGenerateMaze } from './api';
+
+//Generate swamps on some non obstacle nodes after generating the maze(should be called after the maze is generated)
+async function generateSwamps({
+    width,
+    height,
+    obstacles = [],
+    start,
+    end,
+    density = 0.12,
+    maxSwamps = 120
+} = {}) {
+    // Build a fast lookup for blocked cells
+    const blocked = new Set(obstacles.map(o => `${o.x},${o.y}`));
+    if (start) blocked.add(`${start.x},${start.y}`);
+    if (end) blocked.add(`${end.x},${end.y}`);
+
+    // Collect all free cells
+    const freeCells = [];
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const key = `${x},${y}`;
+            if (!blocked.has(key)) {
+                freeCells.push({ x, y });
+            }
+        }
+    }
+
+    if (freeCells.length === 0) return [];
+
+    // Determine how many swamps to place
+    const target = Math.min(
+        Math.max(Math.round(freeCells.length * density), 0),
+        Math.min(maxSwamps, freeCells.length)
+    );
+
+    // Shuffle using Fisher–Yates and take first N
+    for (let i = freeCells.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
+    }
+
+    return freeCells.slice(0, target);
+
+}
+async function apiGenerateMaze({ width, height, start, end, baseUrl = 'http://localhost:18080' }) {
+    const res = await fetch(`${baseUrl}/api/maze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            width,
+            height,
+            start,
+            end
+        })
+    });
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Maze generation failed (${res.status}): ${text}`);
+    }
+    const data = await res.json();
+    // Expecting: { status, width, height, obstacles: [{x, y}, ...] }
+    if (!data || !Array.isArray(data.obstacles)) {
+        throw new Error('Invalid maze response shape');
+    }
+    return data.obstacles;
+}
 
 const ROWS = 20;
 const COLS = 40; // Matching your new 40-col design
@@ -24,6 +92,60 @@ const App = () => {
     const [pathWeight, setPathWeight] = useState(0);//The total weight of the path
     const [visitedWeight, setVisitedWeight] = useState(0);//Total weight of the visited nodes
     // const [data, setData] = useState({});
+
+    // Generate a maze from backend and set obstacles
+    const handleGenerateMaze = useCallback(async () => {
+        try {
+            setLoading(true);
+            // Clear previous results
+            setPath([]);
+            setVisited([]);
+            setDistance(0);
+            setVisitedWeight(0);
+            setPathWeight(0);
+
+            const mazeObstacles = await apiGenerateMaze({
+                width: COLS,
+                height: ROWS,
+                start,
+                end
+            });
+
+            // Ensure start/end are not in obstacles (backend already tries to keep them open)
+            const filtered = mazeObstacles.filter(o => !(o.x === start.x && o.y === start.y) && !(o.x === end.x && o.y === end.y));
+
+            // Replace obstacles with newly generated maze
+            setObstacles(filtered);
+
+            // Auto-generate swamps on free cells
+            const generated = await generateSwamps({
+                width: COLS,
+                height: ROWS,
+                obstacles: filtered,
+                start,
+                end
+            });
+            setSwaps(generated);
+        } catch (e) {
+            console.error(e);
+            // No-op; UI can show a toast here if desired
+        } finally {
+            setLoading(false);
+        }
+    }, [start, end, setObstacles]);
+
+    // Keyboard shortcut: press "m" to generate a maze
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key && e.key.toLowerCase() === 'm') {
+                e.preventDefault();
+                handleGenerateMaze();
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [handleGenerateMaze]);
+
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
             //Set start/end node if its not an obstacle
@@ -38,7 +160,8 @@ const App = () => {
                 if (exists) return prev.filter(o => !(o.x === x && o.y === y));
                 //Remove from obstacles
                 const existsInObstacles = obstacles.some(o => o.x === x && o.y === y);
-                if(existsInObstacles) setObstacles(obstacles.filter(o => !(o.x === x && o.y === y)));
+                if(existsInObstacles) return prev.filter(o => !(o.x === x && o.y === y));
+                    // setObstacles(obstacles.filter(o => !(o.x === x && o.y === y)));
                 return [...prev, { x, y }];
             });
         }
@@ -1677,7 +1800,7 @@ const App = () => {
         setVisitedWeight(0);
         setPathWeight(0);
         try {
-            const response = await fetch('http://127.0.0.1:18080/api/path', {
+            const response = await fetch('http://localhost:18080/api/path', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(req)
@@ -1734,6 +1857,8 @@ const App = () => {
                                         onClick={() => setEditMode('wall')}/>
                             <ControlBtn active={editMode === 'swamp'} color="slate" icon="waves" label="Draw Swamps"
                                         onClick={() => setEditMode('swamp')}/>
+                            <ControlBtn active={editMode === 'maze'} color="slate" icon="edit_road" label="Generate Maze"
+                                        onClick={() => {setEditMode('maze'); handleGenerateMaze()}}/>
                             <div>
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
                                 <div

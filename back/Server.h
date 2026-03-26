@@ -6,6 +6,7 @@
 #define PATH_FINDING_SERVER_H
 #include "crow.h"
 #include "crow/middlewares/cors.h"
+#include "Maze.h"
 
 /**
  * @brief Incoming path-finding request payload decoded from JSON.
@@ -192,7 +193,47 @@ public:
             response["distance"] = res.dist[algoFeed.endId] == 1e9 ? -1 : res.dist[algoFeed.endId];
             response["execution_time"] = res.executionTime;
             auto crow_res = crow::response(response);
-            crow_res.set_header("Access-Control-Allow-Origin", "*");
+            // crow_res.set_header("Access-Control-Allow-Origin", "*");
+            return crow_res;
+        });
+
+        // New endpoint to generate a maze as obstacles
+        CROW_ROUTE(app, "/api/maze").methods("POST"_method)([](const crow::request& req) {
+            auto data = crow::json::load(req.body);
+            if (!data) return crow::response(400, "Invalid JSON");
+
+            int width = data["width"] ? data["width"].i() : 40;
+            int height = data["height"] ? data["height"].i() : 20;
+
+            std::optional<pii> start = std::nullopt;
+            std::optional<pii> end = std::nullopt;
+            if (data["start"] && data["start"]["x"] && data["start"]["y"]) {
+                start = pii{data["start"]["x"].i(), data["start"]["y"].i()};
+            }
+            if (data["end"] && data["end"]["x"] && data["end"]["y"]) {
+                end = pii{data["end"]["x"].i(), data["end"]["y"].i()};
+            }
+
+            auto obstacles = generateMazeObstacles(width, height, start, end);
+
+            // Serialize obstacles
+            std::vector<crow::json::wvalue> obsJson;
+            obsJson.reserve(obstacles.size());
+            for (auto& p : obstacles) {
+                crow::json::wvalue c;
+                c["x"] = p.first;
+                c["y"] = p.second;
+                obsJson.push_back(std::move(c));
+            }
+
+            crow::json::wvalue response;
+            response["status"] = "success";
+            response["width"] = width;
+            response["height"] = height;
+            response["obstacles"] = std::move(obsJson);
+
+            auto crow_res = crow::response(response);
+            // crow_res.set_header("Access-Control-Allow-Origin", "*");
             return crow_res;
         });
 

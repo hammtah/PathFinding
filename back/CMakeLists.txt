@@ -14,6 +14,7 @@ add_executable(Path_Finding main.cpp
         Util.h
         Server.h
         Astar.h
+        Maze.h
 )
 
 target_link_libraries(Path_Finding Crow::Crow)
