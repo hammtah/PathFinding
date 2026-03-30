@@ -1,0 +1,18 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: path_finding_back
+    ports:
+      - "18080:18080"
+
+  front:
+    build:
+      context: ./front/path
+      dockerfile: Dockerfile
+    container_name: path_finding_front
+    depends_on:
+      - back
+    ports:
+      - "5173:80"

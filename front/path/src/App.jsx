@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import './App.css';
+// import { Waves } from 'lucide-react';
 import { Waves } from 'lucide-react';
 // import { generateMaze as apiGenerateMaze } from './api';
 
@@ -91,6 +92,7 @@ const App = () => {
     const [swamps, setSwaps] = useState([]);
     const [pathWeight, setPathWeight] = useState(0);//The total weight of the path
     const [visitedWeight, setVisitedWeight] = useState(0);//Total weight of the visited nodes
+    const [showNoPathPopup, setShowNoPathPopup] = useState(false);
     // const [data, setData] = useState({});
 
     // Generate a maze from backend and set obstacles
@@ -1799,6 +1801,7 @@ const App = () => {
         setVisited([]);
         setVisitedWeight(0);
         setPathWeight(0);
+        setShowNoPathPopup(false);
         try {
             const response = await fetch('http://localhost:18080/api/path', {
                 method: 'POST',
@@ -1808,7 +1811,14 @@ const App = () => {
             const data = await response.json();
             // setData(data);
             // setPath(data.path || []);
-            setPathWeight(data.distance || 0);
+          if (data.distance === -1) {
+            setPathWeight(0);
+            animateVisited(data);
+            setShowNoPathPopup(true);
+            return;
+          }
+
+          setPathWeight(data.distance || 0);
             // setVisitedWeight(data.visitedWeight || 0);
             // setVisited(data.visited || []);
             animateVisited(data);
@@ -1949,6 +1959,26 @@ const App = () => {
                     </div>
                 </main>
             </div>
+
+              {showNoPathPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                  <div className="w-full max-w-md rounded-2xl border border-[#283339] bg-[#111618] p-6 shadow-2xl">
+                    <h3 className="text-xl font-bold text-rose-300">No Path Found</h3>
+                    <p className="mt-2 text-sm text-[#9db0b9]">
+                      The selected algorithm could not find a valid route between the start and end nodes.
+                      Try removing some walls or changing the start/end positions.
+                    </p>
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        onClick={() => setShowNoPathPopup(false)}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:brightness-110"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
         </div>
     );
 };
