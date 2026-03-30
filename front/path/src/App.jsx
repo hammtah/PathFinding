@@ -180,9 +180,14 @@ const App = () => {
         }
     };
 
-    const animatePath = (data)=>{
+    const animatePath = (data, onComplete = () => {})=>{
         //Delay cell showing if its a swamp
         //if the current cell is a swamp then add it and delay the showing of the nextCell
+      if (!data.path || data.path.length === 0) {
+        onComplete();
+        return;
+      }
+
         let delay = 0;
         let isSwamp = false;
         for(let i = 0; i < data.path.length; i++) {
@@ -192,15 +197,23 @@ const App = () => {
             isSwamp = swamps.some(s => s.x === data.path[i].x && s.y === data.path[i].y);
             setTimeout(() => {
                 setPath(prevState => [...prevState, data.path[i]]);
+              if(i === data.path.length - 1){
+                onComplete();
+              }
             }, i*50 + delay);
         }
     }
-    const animateVisited =(data)=>{
+        const animateVisited =(data, onComplete = () => {})=>{
+          if (!data.visited || data.visited.length === 0) {
+            animatePath(data, onComplete);
+            return;
+          }
+
         for(let i = 0; i < data.visited.length; i++) {
             setTimeout(() => {
                 setVisited(prevState => [...prevState, data.visited[i]]);
                 if(i===data.visited.length-1){
-                    animatePath(data);
+                animatePath(data, onComplete);
                 }
             }, i*10);
         }
@@ -1811,17 +1824,15 @@ const App = () => {
             const data = await response.json();
             // setData(data);
             // setPath(data.path || []);
-          if (data.distance === -1) {
-            setPathWeight(0);
-            animateVisited(data);
-            setShowNoPathPopup(true);
-            return;
-          }
-
-          setPathWeight(data.distance || 0);
+            const noPathFound = data.distance === -1;
+            setPathWeight(noPathFound ? 0 : (data.distance || 0));
             // setVisitedWeight(data.visitedWeight || 0);
             // setVisited(data.visited || []);
-            animateVisited(data);
+            animateVisited(data, () => {
+                if (noPathFound) {
+                    setShowNoPathPopup(true);
+                }
+            });
 
             console.log(data);
         } catch (e) {
