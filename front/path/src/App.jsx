@@ -93,6 +93,7 @@ const App = () => {
     const [pathWeight, setPathWeight] = useState(0);//The total weight of the path
     const [visitedWeight, setVisitedWeight] = useState(0);//Total weight of the visited nodes
     const [showNoPathPopup, setShowNoPathPopup] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
     const audioContextRef = useRef(null);
     // const [data, setData] = useState({});
 
@@ -216,6 +217,15 @@ const App = () => {
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [handleGenerateMaze]);
+
+    useEffect(() => {
+        if (!showHelpModal) return;
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') setShowHelpModal(false);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [showHelpModal]);
 
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
@@ -344,6 +354,13 @@ const App = () => {
                     <h2 className="text-xl font-bold tracking-tight">Pathfinding Visualizer</h2>
                 </div>
                 <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowHelpModal(true)}
+                        className="rounded-lg h-10 w-10 flex items-center justify-center bg-[#283339] text-[#9db0b9] hover:bg-[#34424a] hover:text-white transition-colors"
+                        aria-label="Help"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">help</span>
+                    </button>
                     <button onClick={findPath} disabled={loading} className="min-w-[100px] rounded-lg h-10 px-4 bg-primary text-sm font-bold hover:brightness-110 transition-all">
                         {loading ? '...' : 'Visualize'}
                     </button>
@@ -393,11 +410,24 @@ const App = () => {
                     <div className="mt-auto p-4 rounded-xl bg-[#111618] border border-[#283339]">
                         <h4 className="text-sm font-bold mb-2">Algorithm Stats</h4>
                         <div className="flex justify-between text-xs mb-1">
-                            <span className="text-[#9db0b9]">Visited Nodes</span>
+                            <span className="text-[#9db0b9] flex items-center gap-2">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm shrink-0"
+                                    style={{ backgroundColor: 'rgba(251, 191, 36, 0.6)' }}
+                                    aria-hidden="true"
+                                />
+                                Visited Nodes
+                            </span>
                             <span className="text-primary font-mono">{(visited.length === 0) ? 0 : (visited.length - 1)}</span>
                         </div>
                         <div className="flex justify-between text-xs mb-1">
-                            <span className="text-[#9db0b9]">Shortest Path Nodes</span>
+                            <span className="text-[#9db0b9] flex items-center gap-2">
+                                <span
+                                    className="inline-block w-3 h-3 rounded-sm shrink-0 bg-primary/90"
+                                    aria-hidden="true"
+                                />
+                                Shortest Path Nodes
+                            </span>
                             <span className="text-primary font-mono">{(path.length === 0) ? 0 : (path.length- 1)}</span>
                         </div>
                         {/*<div className="flex justify-between text-xs">*/}
@@ -474,6 +504,76 @@ const App = () => {
                         className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:brightness-110"
                       >
                         Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showHelpModal && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+                  onClick={() => setShowHelpModal(false)}
+                >
+                  <div
+                    className="w-full max-w-lg rounded-2xl border border-[#283339] bg-[#111618] p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h3 className="text-xl font-bold text-primary">Quick Guide</h3>
+                    <div className="mt-4 space-y-4 text-sm text-[#9db0b9]">
+                      <section>
+                        <h4 className="font-bold text-white mb-1">Getting Started</h4>
+                        <p>
+                          Start by generating a maze with <strong className="text-white">Generate Maze</strong> in the sidebar
+                          (or press <kbd className="px-1.5 py-0.5 rounded bg-[#283339] text-xs font-mono text-white">M</kbd>).
+                          Then click <strong className="text-white">Visualize</strong> to run the selected algorithm.
+                        </p>
+                      </section>
+                      <section>
+                        <h4 className="font-bold text-white mb-1">Swamps</h4>
+                        <p>
+                          Swamps are cells with a traversal weight of <strong className="text-white">10</strong> (normal cells cost 1).
+                          When the path crosses a swamp you&apos;ll see a short delay and hear a distinct sound.
+                          The total cost is shown as <strong className="text-white">Path Weight</strong> in Algorithm Stats — compare BFS
+                          (ignores weights) with Dijkstra or A* (avoids costly terrain).
+                        </p>
+                      </section>
+                      <section>
+                        <h4 className="font-bold text-white mb-1">Grid Controls</h4>
+                        <p>
+                          Use the sidebar to place the <strong className="text-emerald-400">start</strong> and{' '}
+                          <strong className="text-rose-400">end</strong> nodes, draw <strong className="text-white">walls</strong>, or
+                          paint <strong className="text-white">swamps</strong>. Click and drag on the grid to apply your selection.
+                        </p>
+                      </section>
+                      <section>
+                        <h4 className="font-bold text-white mb-1">Algorithms</h4>
+                        <p>
+                          <strong className="text-white">BFS</strong> finds the fewest hops on unweighted grids.
+                          <strong className="text-white"> Dijkstra</strong> and <strong className="text-white">A*</strong> account for
+                          swamp costs and may choose longer routes with lower total weight.
+                        </p>
+                      </section>
+                      <section>
+                        <h4 className="font-bold text-white mb-1">Colors on the Grid</h4>
+                        <div className="flex flex-col gap-2 mt-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: 'rgba(251, 191, 36, 0.6)' }} />
+                            <span>Visited nodes — cells explored during the search</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-sm shrink-0 bg-primary/90" />
+                            <span>Shortest path nodes — the final route found</span>
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+                    <div className="mt-5 flex justify-end">
+                      <button
+                        onClick={() => setShowHelpModal(false)}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:brightness-110"
+                      >
+                        Got it
                       </button>
                     </div>
                   </div>

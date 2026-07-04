@@ -5,17 +5,18 @@
 
 ## Table of Contents
 1. [Executive Summary](#executive-summary)
-2. [Introduction](#introduction)
-3. [Problem Statement & Objectives](#problem-statement--objectives)
-4. [Methodology](#methodology)
-5. [Implementation & Architecture](#implementation--architecture)
-6. [Technology Stack & Design Choices](#technology-stack--design-choices)
-7. [Installation & Deployment](#installation--deployment)
-8. [Performance Analysis](#performance-analysis)
-9. [Future Works & Limitations](#future-works--limitations)
-10. [Conclusion](#conclusion)
-11. [References](#references)
-12. [Appendix](#appendix)
+2. [Screenshots](#screenshots)
+3. [Introduction](#introduction)
+4. [Problem Statement & Objectives](#problem-statement--objectives)
+5. [Methodology](#methodology)
+6. [Implementation & Architecture](#implementation--architecture)
+7. [Technology Stack & Design Choices](#technology-stack--design-choices)
+8. [Installation & Deployment](#installation--deployment)
+9. [Performance Analysis](#performance-analysis)
+10. [Future Works & Limitations](#future-works--limitations)
+11. [Conclusion](#conclusion)
+12. [References](#references)
+13. [Appendix](#appendix)
 
 ---
 
@@ -33,6 +34,20 @@ This academic project presents an interactive **Pathfinding Visualization Platfo
 
 ### Project Impact:
 This platform serves as an educational tool for understanding pathfinding algorithms by providing visual feedback on how different approaches handle obstacles and terrain costs, making abstract computer science concepts concrete and interactive.
+
+---
+
+## Screenshots
+
+### Maze generation
+Generate a procedural maze with swamps, then place start and end nodes before running an algorithm.
+
+![Generated maze with start, end, walls, and swamps](public/screen-maze.png)
+
+### Pathfinding visualization
+Run BFS, Dijkstra, or A* to see visited nodes (amber), the shortest path (cyan), and stats including path weight.
+
+![A* search result showing visited nodes and shortest path](public/screen-finding.png)
 
 ---
 
