@@ -7,6 +7,28 @@
 #include "crow.h"
 #include "crow/middlewares/cors.h"
 #include "Maze.h"
+#include <cstdlib>
+#include <string>
+
+/** Port from PORT env (Render) or 18080 for local dev. */
+inline int getListenPort() {
+    if (const char* env = std::getenv("PORT")) {
+        try {
+            return std::stoi(env);
+        } catch (...) {
+            return 18080;
+        }
+    }
+    return 18080;
+}
+
+/** Allowed CORS origin from CORS_ORIGIN env or localhost for dev. */
+inline std::string getCorsOrigin() {
+    if (const char* env = std::getenv("CORS_ORIGIN")) {
+        return env;
+    }
+    return "http://localhost:5173";
+}
 
 /**
  * @brief Incoming path-finding request payload decoded from JSON.
@@ -101,11 +123,10 @@ class Server {
      * @sideeffects Mutates the middleware configuration on the internal app instance.
      */
     void bootstrap() {
-        // Configure CORS
         auto& cors = app.get_middleware<crow::CORSHandler>();
         cors
-          .global()                         // Apply to all routes
-          .origin("http://localhost:5173")  // Allow React app
+          .global()
+          .origin(getCorsOrigin())
           .methods("POST"_method, "GET"_method, "OPTIONS"_method)
           .headers("Content-Type", "Authorization");
     }
@@ -148,9 +169,13 @@ public:
      *  - Runs the selected algorithm ("dij", "astar", or "bfs"),
      *  - Returns a JSON response containing path, visited nodes, and distance.
      *
-     * The server listens on port 18080 and runs multi-threaded.
+     * Listens on PORT (Render) or 18080 locally. Set CORS_ORIGIN for production frontend URL.
      */
     void serve(){
+        CROW_ROUTE(app, "/health").methods("GET"_method)([]() {
+            return crow::response(200, "ok");
+        });
+
         CROW_ROUTE(app, "/api/path").methods("POST"_method)([this](const crow::request& req){
             auto data = crow::json::load(req.body);
 
@@ -237,7 +262,7 @@ public:
             return crow_res;
         });
 
-        app.port(18080).multithreaded().run();
+        app.port(getListenPort()).multithreaded().run();
     }
 };
 #endif //PATH_FINDING_SERVER_H
