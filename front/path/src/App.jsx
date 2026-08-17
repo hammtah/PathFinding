@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 // import { Waves } from 'lucide-react';
 import { Waves } from 'lucide-react';
+import { Kbd } from './components/kbd';
 // import { generateMaze as apiGenerateMaze } from './api';
 
 //Generate swamps on some non obstacle nodes after generating the maze(should be called after the maze is generated)
@@ -372,20 +373,21 @@ const App = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar */}
-                <aside className="w-72 border-r border-[#283339] flex flex-col p-6 gap-8 ">
+                <aside className="w-72 border-r border-[#283339] flex flex-col p-6 gap-2 ">
                     <div>
                         <h1 className="text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Grid Controls</h1>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 justify-center">
                             <ControlBtn active={editMode === 'start'} color="emerald" icon="location_on"
-                                        label="Start Node" onClick={() => setEditMode('start')}/>
+                                        label="Start Node" shortcut="s" onClick={() => setEditMode('start')}/>
                             <ControlBtn active={editMode === 'end'} color="rose" icon="flag" label="End Node"
-                                        onClick={() => setEditMode('end')}/>
+                                        shortcut="e" onClick={() => setEditMode('end')}/>
                             <ControlBtn active={editMode === 'wall'} color="slate" icon="edit_square" label="Draw Walls"
-                                        onClick={() => setEditMode('wall')}/>
+                                        shortcut="w" onClick={() => setEditMode('wall')}/>
                             <ControlBtn active={editMode === 'swamp'} color="slate" icon="waves" label="Draw Swamps"
-                                        onClick={() => setEditMode('swamp')}/>
+                                        shortcut="p" onClick={() => setEditMode('swamp')}/>
                             <ControlBtn active={editMode === 'maze'} color="slate" icon="edit_road" label="Generate Maze"
-                                        onClick={() => {setEditMode('maze'); handleGenerateMaze()}}/>
+                                        shortcut="m" onClick={() => {setEditMode('maze'); handleGenerateMaze()}}/>
+                            {/* Algorithms */}
                             <div>
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
                                 <div
@@ -404,6 +406,8 @@ const App = () => {
                                     </label>
                                 </div>
                             </div>
+                            {/* Status */}
+                            <StatusBar stat = {(visited.length === 0) ? '' : ( path.length === 0 ? 'exploring': 'done' ) }/>
                         </div>
                     </div>
 
@@ -583,12 +587,40 @@ const App = () => {
     );
 };
 
-const ControlBtn = ({ active, color, icon, label, onClick }) => (
-    <div onClick={onClick} className={`flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-colors 
+const ControlBtn = ({ active, color, icon, label, onClick, shortcut }) => (
+    <div onClick={onClick} className={`flex justify-between items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-colors 
     ${active ? `bg-${color}-500/20 text-${color}-400 border border-${color}-500/30` : 'text-slate-400 hover:bg-slate-500/10'}`}>
-        <span className="material-symbols-outlined text-[20px]">{icon}</span>
-        <p className="text-sm font-medium">{label}</p>
+        <div className='flex justify-center items-center gap-3'>
+            <span className="material-symbols-outlined text-[20px]">{icon}</span>
+            <p className="text-sm font-medium">{label}</p>
+        </div>
+        <Kbd>{shortcut}</Kbd>
     </div>
 );
+
+const StatusBar = ({stat}) => {
+    let bgColor = 'bg-neutral-200'
+    let label = 'Ready'
+
+    switch (stat) {
+    case 'exploring':
+        bgColor = 'bg-amber-400/60'
+        label = 'Exploring Nodes...'
+        break
+    case 'done':
+        bgColor = 'bg-primary/90'
+        label = 'Path found'
+        break
+    }
+
+    return (
+        <div className="flex items-center justify-center rounded-3xl bg-[#283339] p-2 px-3 mt-8 w-fit mx-auto gap-2">
+            <div className={`rounded-full p-2 ${bgColor}`}></div>
+            <h1 className="text-white text-xs font-bold tracking-widest opacity-50">
+                {label}
+            </h1>
+        </div>
+    )
+}
 
 export default App;
