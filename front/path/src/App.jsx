@@ -207,26 +207,55 @@ const App = () => {
         }
     }, [start, end, setObstacles]);
 
-    // Keyboard shortcut: press "m" to generate a maze
     useEffect(() => {
         const onKeyDown = (e) => {
-            if (e.key && e.key.toLowerCase() === 'm') {
-                e.preventDefault();
-                handleGenerateMaze();
+            if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+
+            const activeElement = document.activeElement;
+            const isTypingContext =
+                activeElement &&
+                (activeElement.tagName === 'INPUT' ||
+                    activeElement.tagName === 'TEXTAREA' ||
+                    activeElement.isContentEditable);
+            if (isTypingContext) return;
+
+            const key = e.key?.toLowerCase();
+            if (!key) return;
+
+            if (key === 'escape') {
+                setShowHelpModal(false);
+                return;
+            }
+
+            switch (key) {
+                case 'm':
+                    e.preventDefault();
+                    handleGenerateMaze();
+                    break;
+                case 's':
+                    e.preventDefault();
+                    setEditMode('start');
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    setEditMode('end');
+                    break;
+                case 'w':
+                    e.preventDefault();
+                    setEditMode('wall');
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    setEditMode('swamp');
+                    break;
+                default:
+                    break;
             }
         };
+
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [handleGenerateMaze]);
-
-    useEffect(() => {
-        if (!showHelpModal) return;
-        const onKeyDown = (e) => {
-            if (e.key === 'Escape') setShowHelpModal(false);
-        };
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, [showHelpModal]);
 
     const handleCellInteraction = (x, y) => {
         if (editMode === 'start') {
@@ -385,8 +414,8 @@ const App = () => {
                                         shortcut="w" onClick={() => setEditMode('wall')}/>
                             <ControlBtn active={editMode === 'swamp'} color="slate" icon="waves" label="Draw Swamps"
                                         shortcut="p" onClick={() => setEditMode('swamp')}/>
-                            <ControlBtn active={editMode === 'maze'} color="slate" icon="edit_road" label="Generate Maze"
-                                        shortcut="m" onClick={() => {setEditMode('maze'); handleGenerateMaze()}}/>
+                            <ControlBtn active={false} color="slate" icon="edit_road" label="Generate Maze"
+                                        shortcut="m" onClick={handleGenerateMaze}/>
                             {/* Algorithms */}
                             <div>
                                 <h1 className="text-white text-xs font-bold uppercase tracking-widest mb-4 opacity-50">Algorithm</h1>
